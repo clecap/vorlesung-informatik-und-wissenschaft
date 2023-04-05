@@ -1,0 +1,367 @@
+%%
+%% common.tex  Macro Datei für den IW Reader
+%%
+
+\pdfoptionpdfminorversion=7                        % Anpassen PDF Version an die PDFs 
+                                                   % die im reader eingebunden werden
+%%
+%% Import Packages
+%%
+\usepackage[german]{babel}                         % Sprache und Trenntabellen auswählen
+\usepackage{geometry}                              % Anpassen Seitengeometrie für Einbau
+                                                   % externer DPF-Dateien
+                                                   
+\usepackage{fontawesome}                           % Einige nette Symbole einbinden
+\usepackage{dtk-logos}                             % Wir brauchen das Bibtex Logo
+\usepackage{manfnt}                                % Benötigtes Symbol einbauen
+\usepackage{MnSymbol,wasysym}                      % Benötigtes Symbol einbauen
+
+\usepackage[inline]{enumitem}                      % Anpassbare Listen aktiv, inline
+\usepackage{hhline}                                % Linien für farbige Tabellen
+\usepackage[table]{xcolor}                         % Farbige Zellen in Tabellen
+\usepackage{adjustbox}                             % Zusatz; rotierte Tabellen
+\usepackage{tabto}                                 % Bessere Tabulatoren
+
+\usepackage{fancyhdr}                              % Sinnvolle headings auf den Seiten
+\pagestyle{fancy}                                  % Heading Stil aktivieren
+
+\usepackage{qrcode}                                % QR Code setzen
+
+\usepackage{pdfpages}                              % Importieren von PDF Dateien
+
+\usepackage[outputdir=build,cache=false]{minted}   % Einbinden von Code mit Highlighting
+                                                   % Option für build directory
+                                                   % Caching aus wegen Selbstinklusion
+
+\usepackage{graphics}                              % Grafiken einbauen
+\usepackage{pgfplots}                              % Plot Funktionen
+\usetikzlibrary{automata, positioning}             % Plot Libraries einbinden
+\usetikzlibrary{arrows, arrows.meta}               % Plot Libraries einbinden
+
+\usepackage{comment}                               % Teile auskommentieren
+\usepackage{todonotes}                             % Notizen für den Autor
+
+\usepackage{titletoc}                              % Partielle Inhaltsverzeichnisse
+
+%%
+%% Optik des Layout etwas nachjustieren
+%%
+\parindent 0pt                                     % Kein Paragrapheneinzug
+\parskip   0.25cm                                  % Paragraphenabstand
+\usepackage{titlesec}                              % \titlespaceing command
+\titlespacing{\paragraph}{0pt}{8pt}{16pt}          % Paragraphen kompakter
+\usepackage[all]{nowidow}                          % Hurenkinder, Schusterjungen vermeiden
+\setlist[enumerate]{topsep=0pt}                    % Anpassbare Listen nutzen und anpassen
+\setlist[itemize]{topsep=0pt}
+\setlist[enumerate]*{label={(\arabic*)}}
+
+%%
+%% Neue Seite am Ende von \part vermeiden
+%%
+%
+% Quelle: https://tex.stackexchange.com/questions/42526/
+%         how-to-remove-page-break-after-part-in-report-book
+%
+\makeatletter
+\def\@endpart{}                                   % First, modify the \@endpart macro.
+\patchcmd{\part}{\null\vfil}{}{}{}                % Third, suppress vertical whitespace 
+                                                  % before "Part xx" material
+\makeatother
+
+%%
+%% Einstellungen für schönere Hyperlinks
+%%
+\usepackage{xurl}                                  % Erlaubt bessere Trennung von URLs
+\usepackage[]{hyperref}                            % Hyperlinks  
+                                                   % CAVE: load hyperref AFTER titlesec
+\hypersetup{
+  bookmarksnumbered=true,                          % number PDF
+  breaklinks=true,                                 % may break links
+  colorlinks,
+  linkcolor={red},                                 % internal links 
+  citecolor={red}, 
+  urlcolor={blue},                                 % linked urls
+  filecolor={blue}                                 % urls which open local files
+}
+
+\usepackage[type={CC},                             % Setup copyright notice
+            modifier={by-nc-sa}, 
+            version={4.0}]{doclicense}
+
+%%
+%% Einige Convenience Abkürzungen
+%%
+\def\PDF{\faFilePdfO PDF}
+\def\online{\faExternalLink online}
+\def\tikz{Ti\textit{k}Z}
+
+%%
+%% Macro, um die totale Seitenzahl des Readers zu ermitteln
+%%
+%
+%  \pages{ <num> }    Addiert und gibt aus
+%  \pages*{ <num> }   Addiert und gibt nicht aus
+%  Zähler:            totalpages
+%
+\newcounter{totalpages}\setcounter{totalpages}{0}  % Lokalen Zähler anlegen
+\makeatletter
+\def\@pages#1{\addtocounter{totalpages}{#1}}%      % Makro Seitenzahl ohne Ausgabe
+\def\@@pages#1{%
+  \def\one{1}%
+  \def\arg{#1}%
+  (#1~\ifx\one\arg{Seite}\else{Seiten}\fi)%
+  \addtocounter{totalpages}{#1}}%                  % Makro Seitenzahl MIT Ausgabe
+\def\pages{\@ifstar\@pages\@@pages}%
+\makeatother
+
+%%
+%% Referenzen über mehr als einen LaTeX-Lauf merken
+%%
+%
+%  Bsp: Wert von totalpages am Ende des Dokuments in totalPageNumber speichern     
+%       \storereference{totalPageNumber}{\thetotalpages}
+%
+%       Wert von totalPageNumber an anderer Stelle nutzen                    
+%       \crtrefnumber{totalPageNumber}
+%
+\usepackage{crossreftools}
+\crtrefundefinedtext{0}                            % Undefinierte Referenzen sind 0
+\newcommand{\storeReference}[2]{\crtcrossreflabel*{#2}[#1]}
+
+
+%%
+%% \glabel definiert einen globalen label, der in \currentLabel gespeichert wird
+%% Benötigt für die backlinks, wo eine Aufgabe etc benutzt wurde
+%%
+\def\glabel#1{\label{#1}\hypertarget{#1}{}\gdef\currentLabel{#1}}
+
+%%
+%% LATEXTRAINING
+%%
+%   \latexaufgabe  Setzt die Titel-Zeile für eine Aufgabe
+%   \latexaufgabe{ <Bezeichnung-der-Aufgabe> }{ <label-zum-referenzieren-der-aufgabe> }
+%
+%   \uselatexaufgabe  Verweist auf eine Aufgabe im Text
+%   \uselatexaufgabe{ <label-zum-referenzieren-der-aufgabe> }
+%   Bsp: Wir bearbeiten \useaufgabe{ <label-zum-referenzieren-der-aufgabe> }
+%
+\def\latexaufgabe#1#2{%
+  \stepcounter{latexaufgabencounter}%
+  \subsection*{\phantomsection\relax \hypertarget{#2}{}#1%
+     \ifdefined\instruktorflag{\hfill\color{gray}#2}\fi}%      
+   \label{lt\thelatexaufgabencounter}%
+  %   Referenznamen nur in Dozentenversion zeigen
+  \addcontentsline{toc}{subsection}{#1}%
+  \storeReference{#2}{#1}%    Speichere Bezeichnung unter dem label
+}
+
+\def\uselatexaufgabe#1{\hyperlink{#1}{\crtrefnumber{#1}}}
+
+\newcounter{latexaufgabencounter}
+
+
+%%
+%% AUFGABEN
+%%
+%   \aufgabe  Setzt die Titel-Zeile für eine Aufgabe
+%   \aufgabe{ <Bezeichnung-der-Aufgabe> }{ <label-zum-referenzieren-der-aufgabe> }
+%
+%   \useaufgabe  Verweist auf eine Aufgabe im Text
+%   \useaufgabe{ <label-zum-referenzieren-der-aufgabe> }
+%   Bsp: Wir bearbeiten \useaufgabe{ <label-zum-referenzieren-der-aufgabe> }
+%
+\def\aufgabe#1#2{%
+  \stepcounter{aufgabencounter}%
+  \hypertarget{#2}{}%        Target für \useaufgabe setzen
+  \label{#2}% 
+  \subsection*{\phantomsection\relax Aufgabe \theaufgabencounter:~#1%
+     \ifdefined\instruktorflag{\hfill\color{gray}#2}\fi}%       
+  % Referenznamen nur in Dozentenversion zeigen
+  \addcontentsline{toc}{subsection}{Aufgabe \theaufgabencounter:~#1}%
+  \storeReference{#2}{Aufgabe \theaufgabencounter:~#1}%     Speichere Mapping von 
+                                         %  Aufgaben-Label zu Aufgabenbezeichnung
+  \storeReference{AU#2}{\theaufgabencounter}%  Maps label to number
+  \textbf{Behandelt:} In \nameref{\crtrefnumber{Label#2}}.
+}
+\def\useaufgabe#1{\hyperlink{#1}{\crtrefnumber{#1}}%
+  \storeReference{Label#1}{\currentLabel}% Mapping von "Label" gefolgt 
+  %         von Aufgaben-Label zu Label der Unit wo es behandelt wird
+  \ifdefined\instruktorflag{\hfill\color{gray}#1} \fi%
+}
+\newcounter{aufgabencounter}
+
+\def\sa#1{\hyperlink{#1}{\bf\crtrefnumber{AU#1}}}%  given a label provides a link to the aufgabe
+
+
+%%
+%% VORFÜHRUNGEN
+%%
+%
+%  \demo  Setzt die 
+%  \demo{ <Bezeichnung-der-Vorführung> }{ <label-zum-referenzieren-der-Vorführung> }
+%  \usedemo{ <label-zum-referenzieren-der-Vorführung> }
+%
+\def\demo#1#2{
+  \stepcounter{democounter}%
+  \hypertarget{#2}{}%        Target für \usedemo setzen
+  \subsection*{\phantomsection\relax Vorführung \thedemocounter:~#1%
+    \ifdefined\instruktorflag{\hfill\color{gray}#2}\fi}%
+  \label{vor\thedemocounter}%  vor<number> ist der label space der Vorführungen
+  %  Referenznamen nur in Dozentenversion zeigen
+  \addcontentsline{toc}{subsection}{Vorführung \thedemocounter:~#1}%
+  \storeReference{#2}{Vorführung \thedemocounter:~#1}  
+}
+\def\usedemo#1{\hyperlink{#1}{\crtrefnumber{#1}}}
+\newcounter{democounter}
+
+
+%%
+%% UNITS
+%%
+%   #1  Name to be written    
+%   #2 Label used for referencing (needed in case of \LaTeX in title)
+\newcounter{unitcounter}\setcounter{unitcounter}{0}%           Zähler für Units
+\def\unit#1#2{%                                                Header für Leseeinheit setzen
+  \clearpage%
+  \stepcounter{unitcounter}%
+  \setcounter{header}{1}%                                      Neue Nummerierung
+  \lhead{Reader}%                                              Linke Header in Unit
+  \rhead{Einheit \theunitcounter: #1}%                         Rechter Header in Unit
+  \hypertarget{#2}{}%                                          Target setzen zur Unit
+  \storeReference{#2}{Reader Einheit \theunitcounter:~#1}%
+  \storeReference{Num#2}{\theunitcounter}%
+  \section*{\phantomsection\relax Einheit \theunitcounter: #1%
+    \ifdefined\instruktorflag{\hfill\color{gray}#2}\fi}%
+    \label{unit\theunitcounter}%
+  \addcontentsline{toc}{section}{Einheit \theunitcounter:~#1}%
+  \gdef\unitName{#1}
+}
+
+\def\useunit#1{\hyperlink{#1}{\crtrefnumber{#1}}}% Referenziere ganze Reader Unit über Namen.
+
+\def\uu#1{\hyperref[\crtrefnumber{#1}]{#1}}%  referenziere reader unit über namnen, zeige nummer
+
+\newcounter{header}\setcounter{header}{1}%    Subzähler für einzelne Elemente in Einheiten
+
+%%
+%% Zur Formatierung jener Teile im Reader, die auf derselben Ebene wie die \units sind
+%% die aber selber nicht Einheiten sind, und sich daher anders verhalten müssen (Links etc)
+%% Bsp: Vorwort Nachwort
+%%
+\def\mysection#1{
+  \clearpage%
+  \lhead{Reader}%
+  \rhead{#1}%
+  \phantomsection%   \section* setzte keine hypertargets
+  \section*{#1}%
+  \addcontentsline{toc}{section}{#1}%
+}
+
+%%
+%% Im Footer rechts überall einen Link zurück zum Inhaltsverzeichnis setzen
+%%
+\rfoot{\hyperlink{Inhaltsverzeichnis}{\faListOl}}% 
+
+%%
+%% Pagestlye für den Reader / PDF Import setzen
+%%
+%  Quelle in den Footer schreiben.
+%
+\fancypagestyle{pdfpages}{%                       Page style für Reader definieren
+  \renewcommand{\headrulewidth}{0pt}%             Keine Trennlinie im Header, denn wir haben 
+%                                                 einen Rahmen in variabler Länge je nach
+%                                                 Größe der importierten Seite
+  \fancyfoot[L]{\footnotesize\pdfpagesfooter}
+  \fancyfoot[C]{}%                                Zentrierter Footer wäre die Seitenzahl, 
+  %                                               die wir im Reader nicht brauchen
+  \fancyfoot[R]{\hyperlink{Inhaltsverzeichnis}{\faListOl}\hspace*{-1cm}}%
+}
+
+\newcommand*\pdfpagesfooter{}
+
+\newcommand{\setlayout}[1]{%               Macro um Page Style (footer) auf der 
+%                                          spezifischen Seite des PDF Include zu setzen
+  \thispagestyle{pdfpages}%                Auf pdfpages page style umschalten
+  \gdef\pdfpagesfooter{#1}%                Parameter in globaler Variablen speichern
+}
+
+
+%%
+%% Pagestyle für den Anhang definieren
+%%
+\fancypagestyle{anhang}{
+  \fancyhead[L]{}
+  \fancyhead[C]{Anhang}%                                
+  \fancyhead[R]{}%
+}
+
+
+
+
+
+%%
+%% READER-INHALT
+%%
+%
+%  \add         Definieren ein Inhaltselement im Reader
+%    #1 Header Text für den Inhalt, dient auch als Label für Verweise    
+%       CAVE:   Darf keine Sonderzeichen enthalten wegen Nutzung als Label
+%    #2 Text der den Inhalt beschreibt
+%    #3 Filename des Inhalts, inklusive Pfad                    oder leer {}
+%    #4 Ein vollständiger Link is web in der Form \href{}{}     oder leer {}
+%
+\makeatletter
+\newwrite\appendFile
+\immediate\openout\appendFile=appendFiles.lst
+\def\add#1#2#3#4{%
+  \hypertarget{Kom:#1}{}%                        Target für das Kommentar setzen
+  \textbf{\S \theunitcounter.\theheader:~#1} #2%  
+  \def\argFile{#3}%                              Parameter in Variable speichern 
+  %                                              nötig für Vergleich mit leerem Macro
+  \ifx\argFile\empty\else%                       Wenn File vorhanden, 
+    \relax\space\hyperlink{Ank:#1}{\PDF}\fi%     Link setzen auf Ankündigungsseite
+  \def\argu{#4}%
+  \ifx\argu\empty\else\relax\space\argu\fi%
+  \ifx\argFile\empty\else%                       Wenn File vorhanden, 
+    \write\appendFile{%                          Ankündigungsseite;  File inkludieren
+      \unexpanded{\hypertarget}{#3}{}%
+      \unexpanded{\hypertarget}{Ank:#1}{}%       Target für die Ankündigungsseite
+      \unexpanded{\rhead{}\lhead{}}%             Header der Ankündigungsseite löschen
+      \unexpanded{\chead}{\footnotesize\textbf{Einheit \theunitcounter:~\unitName}% 
+        \hfill \textbf{Text:}~#1}%               Header Ankündigungsseite  
+      \unexpanded{\phantomsection}%
+      \unexpanded{\addcontentsline}{toc}{section}{#1}%
+      \unexpanded{\large}%
+      \unexpanded{\renewcommand\baselinestretch{1.2}}%
+      \unexpanded{\topskip0pt\vspace*{\fill}}%
+      \unexpanded{\textbf}%
+      {#1} \\[6pt]%
+      #2   \\[6pt]%
+      #4
+      \unexpanded{\vspace*{\fill}}%
+      \unexpanded{\normalsize}%
+      \ifdefined\mittext
+        \unexpanded{\includepdf[pages=-, 
+                                pagecommand=\setlayout{\textbf{Quelle:}~#2}, 
+                                width=\textwidth,
+                                height=\textheight,
+                                keepaspectratio,
+                                frame]}{#3}%
+      \else\par
+         Den Text finden Sie aus urheberrechtlichen Gründen nur 
+         in der eingeschränkten Variante dieses Dokuments oder
+         online unter der Verantwortung der entsprechend verlinkten Site.
+         \vfill\pagebreak
+      \fi
+     %
+      }%
+  \fi%
+  \stepcounter{header}%
+}
+\makeatother
+
+\usepackage{csquotes}                         % Quotes; Paket möglichst spät laden
+
+\ifdefined\instruktorflag%                      Wenn instruktorflag gesetzt
+  \usepackage[firstpageonly=true]{draftwatermark}% Watermark auf Frontseite zur Warnung
+\fi
